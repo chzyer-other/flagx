@@ -12,7 +12,7 @@ type Config struct {
 func main() {
 	var c Config
 	reflag.Parse(&c)
-	fmt.Println("%+v", c.FileName)
+	fmt.Println(c.FileName)
 }
 ```
 

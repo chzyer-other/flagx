@@ -48,17 +48,21 @@ type Field struct {
 	Usage    string
 	flagName string
 	DefVal   string
-	Val      reflect.Value
+	Val      *reflect.Value
 	fielder  Fielder
 }
 
 func NewField(t reflect.StructField, val reflect.Value) (*Field, error) {
 	f := &Field{
 		Name: t.Name,
-		Val:  val,
+		Val:  &val,
 		Type: t.Type,
 	}
 	var err error
+
+	if err = f.decodeTag(t.Tag); err != nil {
+		return nil, err
+	}
 
 	fielderFunc, ok := TypeField[t.Type.Kind()]
 	if !ok {
@@ -71,9 +75,6 @@ func NewField(t reflect.StructField, val reflect.Value) (*Field, error) {
 		}
 	}
 
-	if err := f.decodeTag(t.Tag); err != nil {
-		return nil, err
-	}
 	return f, nil
 }
 

@@ -2,19 +2,69 @@ package reflag
 
 import (
 	"flag"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
 )
 
+var (
+	TypeDuration = reflect.TypeOf(time.Duration(0))
+)
+
 func init() {
 	t := []reflect.Kind{
 		reflect.Int,
+		reflect.Int8,
 		reflect.Int16,
 		reflect.Int32,
 		reflect.Int64,
 	}
 	AddTypeField(NewIntField, t...)
+}
+
+type IntSetter struct {
+	Val  *reflect.Value
+	Kind reflect.Kind
+}
+
+func NewIntSetter(val *reflect.Value, kind reflect.Kind, defVal int64) *IntSetter {
+	is := &IntSetter{
+		Val:  val,
+		Kind: kind,
+	}
+	is.SetInt(defVal)
+	return is
+}
+
+func (is *IntSetter) Set(s string) error {
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return err
+	}
+	is.SetInt(i)
+	return nil
+}
+
+func (is *IntSetter) SetInt(i int64) {
+	var val interface{}
+	switch is.Kind {
+	case reflect.Int:
+		val = int(i)
+	case reflect.Int8:
+		val = int8(i)
+	case reflect.Int16:
+		val = int16(i)
+	case reflect.Int32:
+		val = int32(i)
+	case reflect.Int64:
+		val = int64(i)
+	}
+	is.Val.Set(reflect.ValueOf(val))
+}
+
+func (i *IntSetter) String() string {
+	return fmt.Sprintf("%v", i.Val)
 }
 
 type IntField struct {
@@ -40,7 +90,8 @@ func NewIntField(f *Field) (Fielder, error) {
 }
 
 func (i *IntField) BindFlag(fs *flag.FlagSet) {
-	fs.IntVar(i.f.Instance().(*int), i.f.FlagName(), int(i.defval), i.f.Usage)
+	is := NewIntSetter(i.f.Val, i.f.Type.Kind(), i.defval)
+	fs.Var(is, i.f.FlagName(), i.f.Usage)
 }
 
 func (i *IntField) Default() interface{} {

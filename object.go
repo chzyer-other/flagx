@@ -7,15 +7,15 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"time"
 )
 
 var (
 	RegexpArgNumName = regexp.MustCompile(`^\[(\d*)\]$`)
-)
-
-var (
-	TypeDuration = reflect.TypeOf(time.Duration(0))
+	CmdFlagConfig    = &FlagConfig{
+		Name:          os.Args[0],
+		ErrorHandling: flag.PanicOnError,
+		Args:          os.Args[1:],
+	}
 )
 
 type Object struct {
@@ -44,26 +44,33 @@ func NewObject(obj interface{}) (*Object, error) {
 		Val:  v,
 	}
 
+	if err := o.parseFields(t, &v); err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
+func (o *Object) parseFields(t reflect.Type, v *reflect.Value) error {
 	argValidate := make([]bool, t.NumField())
 	for i := 0; i < t.NumField(); i++ {
 		field, err := NewField(t.Field(i), v.Field(i))
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if idx, ok := field.ArgIdx(); ok {
 			if idx == -1 {
 				if o.isAllArg {
-					return nil, fmt.Errorf("only can have one [] arg")
+					return fmt.Errorf("only can have one [] arg")
 				}
 				if len(o.Arg) > 0 {
-					return nil, fmt.Errorf("only can use [] arg if only have one specified [] arg")
+					return fmt.Errorf("only can use [] arg if only have one specified [] arg")
 				}
 				o.isAllArg = true
 			} else if o.isAllArg {
-				return nil, fmt.Errorf("can't use [\\d] if have one [] arg")
+				return fmt.Errorf("can't use [\\d] if have one [] arg")
 			}
 			if idx >= len(argValidate) {
-				return nil, fmt.Errorf("invalid arg index %d", idx)
+				return fmt.Errorf("invalid arg index %d", idx)
 			}
 			argValidate[idx] = true
 			o.Arg = append(o.Arg, field)
@@ -74,10 +81,11 @@ func NewObject(obj interface{}) (*Object, error) {
 
 	for idx := range o.Arg {
 		if !argValidate[idx] {
-			return nil, fmt.Errorf("missing arg idx: %d", idx)
+			return fmt.Errorf("missing arg idx: %d", idx)
 		}
 	}
-	return o, nil
+
+	return nil
 }
 
 func (o *Object) usage(fs *flag.FlagSet, name string) {
@@ -99,31 +107,37 @@ func (o *Object) usage(fs *flag.FlagSet, name string) {
 }
 
 func (o *Object) Parse() error {
-	return o.ParseFlag(os.Args[0], flag.PanicOnError, os.Args[1:])
+	return o.ParseFlag(CmdFlagConfig)
 }
 
-func (o *Object) ParseFlag(name string, eh flag.ErrorHandling, args []string) error {
-	fs := flag.NewFlagSet(name, eh)
+type FlagConfig struct {
+	Name          string
+	ErrorHandling flag.ErrorHandling
+	Args          []string
+}
+
+func (o *Object) ParseFlag(fc *FlagConfig) error {
+	fs := flag.NewFlagSet(fc.Name, fc.ErrorHandling)
 	for _, f := range o.Opt {
 		f.BindFlag(fs)
 	}
 	fs.Usage = func() {
-		o.usage(fs, name)
+		o.usage(fs, fc.Name)
 	}
 	o.Usage = fs.Usage
 
-	if err := fs.Parse(args); err != nil {
+	if err := fs.Parse(fc.Args); err != nil {
 		return err
 	}
 
 	for _, f := range o.Arg {
 		idx, _ := f.ArgIdx()
 		if idx < 0 {
-			if err := f.SetArgs(&f.Val, fs); err != nil {
+			if err := f.SetArgs(f.Val, fs); err != nil {
 				return err
 			}
 		} else {
-			if err := f.SetArg(&f.Val, fs); err != nil {
+			if err := f.SetArg(f.Val, fs); err != nil {
 				return err
 			}
 		}

@@ -1,13 +1,6 @@
 package reflag
 
-import (
-	"flag"
-	"reflect"
-)
-
-func init() {
-	AddTypeField(NewBoolField, reflect.Bool)
-}
+import "flag"
 
 type BoolField struct {
 	f      *Field

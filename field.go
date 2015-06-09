@@ -11,7 +11,6 @@ import (
 const (
 	KEY_USAGE = "usage"
 	KEY_DEF   = "def"
-	KEY_OP    = "op"
 	KEY_MAX   = "max"
 	KEY_MIN   = "min"
 )
@@ -19,14 +18,8 @@ const (
 var (
 	ErrOptMissHandler = Error("opt(%v) in field(%v) missing handler")
 	ErrOptInvalid     = Error("optString(%v) in field(%v) is invalid")
-	TypeField         = map[reflect.Kind]func(f *Field) Fielder{}
+	ErrTypeSupport    = Error("type(%v) is not supported")
 )
-
-func AddTypeField(f func(f *Field) Fielder, kinds ...reflect.Kind) {
-	for _, k := range kinds {
-		TypeField[k] = f
-	}
-}
 
 type Fielder interface {
 	Init() error
@@ -64,18 +57,13 @@ type Field struct {
 	fielder  Fielder
 }
 
-func NewField(t reflect.StructField, val reflect.Value) (*Field, error) {
-	f := &Field{
+func NewField(t reflect.StructField, val reflect.Value) (f *Field, err error) {
+	f = &Field{
 		Name: t.Name,
 		Val:  &val,
 		Type: t.Type,
 	}
-	var err error
-	fielderFunc, ok := TypeField[t.Type.Kind()]
-	if !ok {
-		return nil, fmt.Errorf("not support type: %v", t.Type)
-	}
-	f.fielder = fielderFunc(f)
+	f.fielder = f.selectFielder(t.Type)(f)
 
 	if err = f.decodeTag(t.Tag); err != nil {
 		return nil, err
@@ -86,6 +74,35 @@ func NewField(t reflect.StructField, val reflect.Value) (*Field, error) {
 	}
 
 	return f, nil
+}
+
+func (f *Field) selectFielder(t reflect.Type) func(f *Field) Fielder {
+	switch t.Kind() {
+	case reflect.Int, reflect.Int64:
+		fallthrough
+	case reflect.Int8, reflect.Int16, reflect.Int32:
+		if n := IntFieldHook.Select(t); n != nil {
+			return n
+		}
+		return NewIntField
+	case reflect.Bool:
+		if n := BoolFieldHook.Select(t); n != nil {
+			return n
+		}
+		return NewBoolField
+	case reflect.String:
+		if n := StringFieldHook.Select(t); n != nil {
+			return n
+		}
+		return NewStringField
+	case reflect.Slice:
+		if n := SliceFieldHook.Select(t); n != nil {
+			return n
+		}
+		return NewSliceField
+	default:
+		panic(fmt.Sprintf("not support for type: %v", t))
+	}
 }
 
 func (f *Field) ArgIdx() (int, bool) {

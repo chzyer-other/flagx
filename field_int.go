@@ -12,17 +12,6 @@ var (
 	TypeDuration = reflect.TypeOf(time.Duration(0))
 )
 
-func init() {
-	t := []reflect.Kind{
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64,
-	}
-	AddTypeField(NewIntField, t...)
-}
-
 func chooseInt64(a, b int64, max bool) int64 {
 	if a > b {
 		if max {
@@ -99,9 +88,6 @@ type IntField struct {
 }
 
 func NewIntField(f *Field) Fielder {
-	if (*DurationField).Fit(nil, f.Type) {
-		return NewDurationField(f)
-	}
 	return &IntField{f: f}
 }
 func (i *IntField) Init() (err error) {

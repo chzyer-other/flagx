@@ -5,6 +5,19 @@ import (
 	"time"
 )
 
+func ExampleSliceField() {
+	type Config struct {
+		Slice []string
+	}
+	var c Config
+	ParseFlag(&c, &FlagConfig{Args: []string{
+		"-slice=hello", "-slice=bye",
+	}})
+	fmt.Printf("%v", c)
+	// Output:
+	// {[hello bye]}
+}
+
 func ExampleStringField() {
 	type Config struct {
 		Desc string

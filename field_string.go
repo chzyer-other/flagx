@@ -7,10 +7,6 @@ import (
 	"strconv"
 )
 
-func init() {
-	AddTypeField(NewStringField, reflect.String)
-}
-
 type StringField struct {
 	f         *Field
 	MaxLength *int

@@ -13,8 +13,12 @@ type SliceField struct {
 	f *Field
 }
 
-func NewSliceField(f *Field) (Fielder, error) {
-	return &SliceField{f: f}, nil
+func NewSliceField(f *Field) Fielder {
+	return &SliceField{f: f}
+}
+
+func (b *SliceField) Init() error {
+	return nil
 }
 
 func (b *SliceField) BindFlag(fs *flag.FlagSet) {

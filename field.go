@@ -6,26 +6,30 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
 	KEY_USAGE = "usage"
 	KEY_DEF   = "def"
 	KEY_OP    = "op"
+	KEY_MAX   = "max"
+	KEY_MIN   = "min"
 )
 
 var (
-	TypeField = map[reflect.Kind]func(f *Field) (Fielder, error){}
+	ErrOptMissHandler = Error("opt(%v) in field(%v) missing handler")
+	ErrOptInvalid     = Error("optString(%v) in field(%v) is invalid")
+	TypeField         = map[reflect.Kind]func(f *Field) Fielder{}
 )
 
-func AddTypeField(f func(f *Field) (Fielder, error), kinds ...reflect.Kind) {
+func AddTypeField(f func(f *Field) Fielder, kinds ...reflect.Kind) {
 	for _, k := range kinds {
 		TypeField[k] = f
 	}
 }
 
 type Fielder interface {
+	Init() error
 	Default() interface{}
 	BindFlag(*flag.FlagSet)
 }
@@ -38,8 +42,16 @@ type ArgSetter interface {
 	SetArg(v *reflect.Value, arg string) error
 }
 
+type OptBinder interface {
+	BindOpt(key, val string) error
+}
+
 type Arg interface {
 	Arg(n int) string
+}
+
+type AfterParser interface {
+	AfterParse() error
 }
 
 type Field struct {
@@ -59,20 +71,18 @@ func NewField(t reflect.StructField, val reflect.Value) (*Field, error) {
 		Type: t.Type,
 	}
 	var err error
+	fielderFunc, ok := TypeField[t.Type.Kind()]
+	if !ok {
+		return nil, fmt.Errorf("not support type: %v", t.Type)
+	}
+	f.fielder = fielderFunc(f)
 
 	if err = f.decodeTag(t.Tag); err != nil {
 		return nil, err
 	}
 
-	fielderFunc, ok := TypeField[t.Type.Kind()]
-	if !ok {
-		return nil, fmt.Errorf("not support type: %v", t.Type)
-	}
-	if ok {
-		f.fielder, err = fielderFunc(f)
-		if err != nil {
-			return nil, err
-		}
+	if err = f.fielder.Init(); err != nil {
+		return nil, err
 	}
 
 	return f, nil
@@ -91,18 +101,27 @@ func (f *Field) ArgIdx() (int, bool) {
 }
 
 func (f *Field) decodeTag(t reflect.StructTag) error {
-	tags := strings.Split(t.Get("flag"), ",")
+	flagString := t.Get("flag")
+	tags := strings.Split(flagString, ",")
 	f.flagName = tags[0]
 	for i := 1; i < len(tags); i++ {
 		sp := strings.Split(tags[i], "=")
 		if len(sp) != 2 {
-			return fmt.Errorf("wrong length")
+			return ErrOptInvalid.Format(flagString, f.Name)
 		}
 		switch sp[0] {
 		case KEY_USAGE:
 			f.Usage = sp[1]
 		case KEY_DEF:
 			f.DefVal = sp[1]
+		default:
+			ob, ok := f.fielder.(OptBinder)
+			if !ok {
+				return ErrOptMissHandler.Format(sp[0], f.Name)
+			}
+			if err := ob.BindOpt(sp[0], sp[1]); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -120,30 +139,7 @@ func (f *Field) String() string {
 }
 
 func (f *Field) Default() interface{} {
-	if f.fielder != nil {
-		return f.fielder.Default()
-	}
-	val := f.DefVal
-	switch f.Type.Kind() {
-	case reflect.Bool:
-		if val == "true" {
-			return true
-		}
-		return false
-	case reflect.Int, reflect.Int64:
-
-		if f.Type.AssignableTo(TypeDuration) {
-			d, err := time.ParseDuration(val)
-			if err != nil {
-				panic(err)
-			}
-			return d
-		}
-		i, _ := strconv.Atoi(val)
-		return i
-	default:
-		return nil
-	}
+	return f.fielder.Default()
 }
 
 func (f *Field) Instance() interface{} {
@@ -172,4 +168,13 @@ func (f *Field) SetArg(v *reflect.Value, fs *flag.FlagSet) error {
 		return fmt.Errorf("field %v is not define to arg", f)
 	}
 	return as.SetArg(v, fs.Arg(idx))
+}
+
+func (f *Field) AfterParse() error {
+	ap, ok := f.fielder.(AfterParser)
+	if !ok {
+		return nil
+	}
+
+	return ap.AfterParse()
 }

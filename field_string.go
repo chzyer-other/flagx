@@ -14,8 +14,12 @@ type StringField struct {
 	f *Field
 }
 
-func NewStringField(f *Field) (Fielder, error) {
-	return &StringField{f: f}, nil
+func NewStringField(f *Field) Fielder {
+	return &StringField{f: f}
+}
+
+func (b *StringField) Init() error {
+	return nil
 }
 
 func (b *StringField) BindFlag(fs *flag.FlagSet) {

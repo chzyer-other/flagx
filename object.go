@@ -130,6 +130,12 @@ func (o *Object) ParseFlag(fc *FlagConfig) error {
 		return err
 	}
 
+	for _, f := range o.Opt {
+		if err := f.AfterParse(); err != nil {
+			return err
+		}
+	}
+
 	for _, f := range o.Arg {
 		idx, _ := f.ArgIdx()
 		if idx < 0 {

@@ -1,6 +1,26 @@
 package reflag
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+func ExampleDurationField() {
+	type Config struct {
+		Second time.Duration
+		Minute time.Duration `flag:",def=1m"`
+		Min    time.Duration `flag:",min=1h"`
+		Max    time.Duration `flag:",max=30s"`
+	}
+	var c Config
+	ParseFlag(&c, &FlagConfig{
+		Args: []string{
+			"-second=5s", "-min=8s", "-max=10h",
+		},
+	})
+	fmt.Printf("%v", c)
+	// Output: {5s 1m0s 1h0m0s 30s}
+}
 
 func ExampleIntField() {
 	type Config struct {
@@ -8,13 +28,17 @@ func ExampleIntField() {
 		Int32    int32 `flag:"other"`
 		Int64Def int64 `flag:",def=10"`
 		Int8     int8  `flag:",def=54"`
+		Int16    int16 `flag:"int16,min=6,def=5,max=7"`
+		Max      int   `flag:",max=5"`
+		Min      int   `flag:",min=3"`
 	}
 	var c Config
 	ParseFlag(&c, &FlagConfig{
 		Args: []string{
 			"-int=5", "-other=100", "-int64Def=3",
+			"-max=100", "-min=2",
 		},
 	})
-	fmt.Printf("%v, %v, %v, %v", c.Int, c.Int32, c.Int64Def, c.Int8)
-	// Output: 5, 100, 3, 54
+	fmt.Printf("%v", c)
+	// Output: {5 100 3 54 6 5 3}
 }

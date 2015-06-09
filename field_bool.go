@@ -14,16 +14,19 @@ type BoolField struct {
 	defval bool
 }
 
-func NewBoolField(f *Field) (Fielder, error) {
-	defval := true
-	if f.DefVal == "" {
-		defval = true
-	}
+func NewBoolField(f *Field) Fielder {
 
 	return &BoolField{
-		f:      f,
-		defval: defval,
-	}, nil
+		f: f,
+	}
+}
+
+func (b *BoolField) Init() error {
+	b.defval = true
+	if b.f.DefVal == "" {
+		b.defval = false
+	}
+	return nil
 }
 
 func (b *BoolField) BindFlag(fs *flag.FlagSet) {

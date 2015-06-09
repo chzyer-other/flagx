@@ -103,8 +103,15 @@ func (f *Field) ArgIdx() (int, bool) {
 func (f *Field) decodeTag(t reflect.StructTag) error {
 	flagString := t.Get("flag")
 	tags := strings.Split(flagString, ",")
-	f.flagName = tags[0]
-	for i := 1; i < len(tags); i++ {
+	start := 1
+
+	if strings.Contains(tags[0], "=") {
+		start = 0
+	} else {
+		f.flagName = tags[0]
+	}
+
+	for i := start; i < len(tags); i++ {
 		sp := strings.Split(tags[i], "=")
 		if len(sp) != 2 {
 			return ErrOptInvalid.Format(flagString, f.Name)

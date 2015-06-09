@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 func init() {
@@ -11,7 +12,8 @@ func init() {
 }
 
 type StringField struct {
-	f *Field
+	f         *Field
+	MaxLength *int
 }
 
 func NewStringField(f *Field) Fielder {
@@ -19,6 +21,31 @@ func NewStringField(f *Field) Fielder {
 }
 
 func (b *StringField) Init() error {
+	return nil
+}
+
+func (b *StringField) BindOpt(key, value string) error {
+	switch key {
+	case KEY_MAX:
+		length, err := strconv.Atoi(value)
+		if err != nil {
+			return err
+		}
+		b.MaxLength = &length
+	default:
+		return ErrOptMissHandler.Format(key, b.f.Name)
+	}
+	return nil
+}
+
+func (b *StringField) AfterParse() error {
+	s := b.f.Instance().(*string)
+	if b.MaxLength != nil {
+		bb := []rune(*s)
+		if len(bb) > *b.MaxLength {
+			*s = string(bb[:*b.MaxLength])
+		}
+	}
 	return nil
 }
 

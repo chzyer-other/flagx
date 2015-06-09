@@ -5,6 +5,33 @@ import (
 	"time"
 )
 
+func ExampleStringField() {
+	type Config struct {
+		Desc string
+		Max  string `flag:"max=3"`
+	}
+	var c Config
+	ParseFlag(&c, &FlagConfig{Args: []string{
+		"-desc=cao", "-max=13日1jfn",
+	}})
+	fmt.Printf("%v", c)
+	// Output:
+	// {cao 13日}
+}
+
+func ExampleBoolField() {
+	type Config struct {
+		Ok   bool
+		True bool `flag:"true,def=true"`
+	}
+	var c Config
+	ParseFlag(&c, &FlagConfig{Args: []string{
+		"-ok",
+	}})
+	fmt.Printf("%v", c)
+	// Output: {true true}
+}
+
 func ExampleDurationField() {
 	type Config struct {
 		Second time.Duration

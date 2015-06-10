@@ -104,7 +104,7 @@ func (o *Object) usage(fs *flag.FlagSet, name string) {
 		if idx < 0 {
 			arg += "..."
 		}
-		arg += ">"
+		arg += "> "
 	}
 
 	io.WriteString(os.Stderr, fmt.Sprintf("%s %s\n", name, arg))

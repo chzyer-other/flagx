@@ -46,7 +46,7 @@ func NewIntSetter(val *reflect.Value, kind reflect.Kind, max, min *int64) *IntSe
 func (is *IntSetter) Set(s string) error {
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return err
+		return ErrUsage.Format(err)
 	}
 	is.SetInt(i)
 	return nil
@@ -127,8 +127,18 @@ func (i *IntField) Default() interface{} {
 	return i.defval
 }
 
-func (i *IntField) Argable() bool  { return true }
-func (i *IntField) Argsable() bool { return false }
+func (i *IntField) SetArg(v *reflect.Value, arg string) error {
+	if arg == "" {
+		return nil
+	}
+	argInt, err := strconv.ParseInt(arg, 10, 64)
+	if err != nil {
+		return ErrUsage.Formatf("set args for field(%v) of type(%v) error", i.f.Name, i.f.Type)
+	}
+	is := NewIntSetter(i.f.Val, i.f.Type.Kind(), i.Max, i.Min)
+	is.SetInt(argInt)
+	return nil
+}
 
 type DurationField struct {
 	f      *Field

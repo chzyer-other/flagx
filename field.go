@@ -177,7 +177,7 @@ func (f *Field) BindFlag(fs *flag.FlagSet) {
 func (f *Field) SetArgs(v *reflect.Value, fs *flag.FlagSet) error {
 	as, ok := f.fielder.(ArgsSetter)
 	if !ok {
-		return fmt.Errorf("field %v is not settable args", f.fielder)
+		return fmt.Errorf("the type(%v) of field(%v) can't be args", f.Type, f.Name)
 	}
 	return as.SetArgs(v, fs.Args())
 }

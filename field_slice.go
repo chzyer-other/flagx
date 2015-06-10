@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 type SliceSetter struct {
@@ -28,7 +29,8 @@ func (s *SliceSetter) String() string {
 }
 
 type SliceField struct {
-	f *Field
+	f   *Field
+	Min *int
 }
 
 func NewSliceField(f *Field) Fielder {
@@ -40,6 +42,30 @@ func (b *SliceField) Init() error {
 	case reflect.String:
 	default:
 		return ErrTypeSupport.Format(b.f.Type)
+	}
+	return nil
+}
+
+func (b *SliceField) SetArgs(v *reflect.Value, args []string) error {
+	if b.Min != nil {
+		if len(args) < *b.Min {
+			return ErrUsage.Formatf("length of args must more than %v", *b.Min)
+		}
+	}
+	*(b.f.Instance().(*[]string)) = args
+	return nil
+}
+
+func (b *SliceField) BindOpt(k, v string) (err error) {
+	switch k {
+	case KEY_MIN:
+		min, err := strconv.Atoi(v)
+		if err != nil {
+			return err
+		}
+		b.Min = &min
+	default:
+		return ErrOptMissHandler.Format(k, b.f)
 	}
 	return nil
 }

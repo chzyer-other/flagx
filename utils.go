@@ -19,6 +19,10 @@ func (e *ErrorFmt) Format(args ...interface{}) error {
 	return e
 }
 
+func (e *ErrorFmt) Formatf(fmt_ string, args ...interface{}) error {
+	return e.Format(fmt.Sprintf(fmt_, args...))
+}
+
 func (e *ErrorFmt) Error() string {
 	return fmt.Sprintf(e.err.Error(), e.args...)
 }

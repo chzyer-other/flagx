@@ -11,9 +11,10 @@ import (
 
 var (
 	RegexpArgNumName = regexp.MustCompile(`^\[(\d*)\]$`)
+	ErrUsage         = Error("%v")
 	CmdFlagConfig    = &FlagConfig{
 		Name:          os.Args[0],
-		ErrorHandling: flag.PanicOnError,
+		ErrorHandling: flag.ExitOnError,
 		Args:          os.Args[1:],
 	}
 )
@@ -72,16 +73,20 @@ func (o *Object) parseFields(t reflect.Type, v *reflect.Value) error {
 			if idx >= len(argValidate) {
 				return fmt.Errorf("invalid arg index %d", idx)
 			}
-			argValidate[idx] = true
+			if !o.isAllArg {
+				argValidate[idx] = true
+			}
 			o.Arg = append(o.Arg, field)
 		} else {
 			o.Opt = append(o.Opt, field)
 		}
 	}
 
-	for idx := range o.Arg {
-		if !argValidate[idx] {
-			return fmt.Errorf("missing arg idx: %d", idx)
+	if !o.isAllArg {
+		for idx := range o.Arg {
+			if !argValidate[idx] {
+				return fmt.Errorf("missing arg idx: %d", idx)
+			}
 		}
 	}
 
@@ -90,20 +95,26 @@ func (o *Object) parseFields(t reflect.Type, v *reflect.Value) error {
 
 func (o *Object) usage(fs *flag.FlagSet, name string) {
 	arg := ""
+	if len(o.Opt) > 0 {
+		arg += "[option] "
+	}
 	for _, f := range o.Arg {
 		idx, _ := f.ArgIdx()
-		arg += "[" + f.Name
+		arg += "<" + f.Name
 		if idx < 0 {
-			arg += " ..."
+			arg += "..."
 		}
-		arg += "]"
+		arg += ">"
 	}
 
 	io.WriteString(os.Stderr, fmt.Sprintf("%s %s\n", name, arg))
-	fs.VisitAll(func(f *flag.Flag) {
-		format := "  -%s=%s: %s\n"
-		fmt.Fprintf(os.Stderr, format, f.Name, f.DefValue, f.Usage)
-	})
+	if len(o.Opt) > 0 {
+		fmt.Fprintf(os.Stderr, "\noption:\n")
+		fs.VisitAll(func(f *flag.Flag) {
+			format := "  -%s=%s: %s\n"
+			fmt.Fprintf(os.Stderr, format, f.Name, f.DefValue, f.Usage)
+		})
+	}
 }
 
 func (o *Object) Parse() error {

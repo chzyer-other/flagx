@@ -5,16 +5,20 @@ import "os"
 func Parse(obj interface{}) {
 	o, err := NewObject(obj)
 	if err != nil {
-		exit(err)
+		Exit(o, err)
 	}
 	if err = o.Parse(); err != nil {
-		exit(err)
+		Exit(o, err)
 	}
 }
 
-func exit(err error) {
+func Exit(obj *Object, err error) {
 	if err != nil {
 		println(err.Error())
+	}
+	if err == ErrUsage {
+		println("\nusage:")
+		obj.Usage()
 	}
 	os.Exit(1)
 }
@@ -22,9 +26,9 @@ func exit(err error) {
 func ParseFlag(obj interface{}, fc *FlagConfig) {
 	o, err := NewObject(obj)
 	if err != nil {
-		exit(err)
+		Exit(o, err)
 	}
 	if err = o.ParseFlag(fc); err != nil {
-		exit(err)
+		Exit(o, err)
 	}
 }

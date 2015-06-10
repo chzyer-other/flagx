@@ -35,7 +35,7 @@ func ExampleStringField() {
 func ExampleBoolField() {
 	type Config struct {
 		Ok   bool
-		True bool `flag:"true,def=true"`
+		True bool `flag:"def=true"`
 	}
 	var c Config
 	ParseFlag(&c, &FlagConfig{Args: []string{
@@ -48,9 +48,9 @@ func ExampleBoolField() {
 func ExampleDurationField() {
 	type Config struct {
 		Second time.Duration
-		Minute time.Duration `flag:",def=1m"`
-		Min    time.Duration `flag:",min=1h"`
-		Max    time.Duration `flag:",max=30s"`
+		Minute time.Duration `flag:"def=1m"`
+		Min    time.Duration `flag:"min=1h"`
+		Max    time.Duration `flag:"max=30s"`
 	}
 	var c Config
 	ParseFlag(&c, &FlagConfig{
@@ -66,11 +66,11 @@ func ExampleIntField() {
 	type Config struct {
 		Int      int
 		Int32    int32 `flag:"other"`
-		Int64Def int64 `flag:",def=10"`
-		Int8     int8  `flag:",def=54"`
-		Int16    int16 `flag:"int16,min=6,def=5,max=7"`
-		Max      int   `flag:",max=5"`
-		Min      int   `flag:",min=3"`
+		Int64Def int64 `flag:"def=10"`
+		Int8     int8  `flag:"def=54"`
+		Int16    int16 `flag:"int16;min=6;def=5;max=7"`
+		Max      int   `flag:"max=5"`
+		Min      int   `flag:"min=3"`
 	}
 	var c Config
 	ParseFlag(&c, &FlagConfig{

@@ -119,7 +119,7 @@ func (f *Field) ArgIdx() (int, bool) {
 
 func (f *Field) decodeTag(t reflect.StructTag) error {
 	flagString := t.Get("flag")
-	tags := strings.Split(flagString, ",")
+	tags := strings.Split(flagString, ";")
 	start := 1
 
 	if strings.Contains(tags[0], "=") {

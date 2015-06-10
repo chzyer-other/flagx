@@ -8,9 +8,9 @@ import (
 
 func TestType(t *testing.T) {
 	type Config struct {
-		IsDecode bool          `flag:"d,usage=urldecode enable"`
-		Int      int           `flag:",def=5,usage=inta!"`
-		Interval time.Duration `flag:",def=60s,usage=pull interval"`
+		IsDecode bool          `flag:"d;usage=urldecode enable"`
+		Int      int           `flag:"def=5;usage=inta!"`
+		Interval time.Duration `flag:"def=60s;usage=pull interval"`
 		Cao      string
 		Content  string `flag:"[0]"`
 	}

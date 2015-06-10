@@ -3,9 +3,7 @@ package reflag
 import "reflect"
 
 var (
-	IntFieldHook = Hooks{
-		{(*DurationField)(nil).Fit, NewDurationField},
-	}
+	IntFieldHook    = Hooks{}
 	BoolFieldHook   = Hooks{}
 	StringFieldHook = Hooks{}
 	SliceFieldHook  = Hooks{}
@@ -20,6 +18,10 @@ func (hs Hooks) Select(t reflect.Type) func(t *Field) Fielder {
 		}
 	}
 	return nil
+}
+
+func (hs *Hooks) Append(h *Hook) {
+	*hs = append(*hs, h)
 }
 
 type Hook struct {

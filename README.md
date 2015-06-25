@@ -1,4 +1,4 @@
-# reflag
+# flagx
 A Replacement for golang stdlib flag
 
 ## Getting started

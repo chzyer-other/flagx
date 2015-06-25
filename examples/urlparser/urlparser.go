@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/chzyer/reflag"
+	"github.com/chzyer/flagx"
 	"net/url"
 )
 
@@ -30,7 +30,7 @@ type Config struct {
 
 func main() {
 	var c Config
-	reflag.Parse(&c)
+	flagx.Parse(&c)
 	for _, o := range c.Urls {
 		ParseUrl(o)
 	}

@@ -1,4 +1,4 @@
-package reflag
+package flagx
 
 import (
 	"errors"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chzyer/reflag"
+	"github.com/chzyer/flagx"
 )
 
 type Config struct {
@@ -16,7 +16,7 @@ type Config struct {
 
 func main() {
 	var c Config
-	reflag.Parse(&c)
+	flagx.Parse(&c)
 
 	encoding := base64.StdEncoding
 	if c.UrlEncoding {

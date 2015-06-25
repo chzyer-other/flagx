@@ -11,7 +11,7 @@ type Config struct {
 
 func main() {
 	var c Config
-	reflag.Parse(&c)
+	flagx.Parse(&c)
 	fmt.Println(c.FileName)
 }
 ```

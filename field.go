@@ -78,7 +78,7 @@ func NewField(t reflect.StructField, val reflect.Value) (f *Field, err error) {
 
 func (f *Field) selectFielder(t reflect.Type) func(f *Field) Fielder {
 	switch t.Kind() {
-	case reflect.Int, reflect.Int64:
+	case reflect.Int, reflect.Int64, reflect.Uint:
 		fallthrough
 	case reflect.Int8, reflect.Int16, reflect.Int32:
 		if n := IntFieldHook.Select(t); n != nil {

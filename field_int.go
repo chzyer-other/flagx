@@ -72,6 +72,8 @@ func (is *IntSetter) SetInt(i int64) {
 		val = int32(i)
 	case reflect.Int64:
 		val = int64(i)
+	case reflect.Uint:
+		val = uint(i)
 	}
 	is.Val.Set(reflect.ValueOf(val))
 }

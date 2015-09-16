@@ -2,7 +2,7 @@ package flagx
 
 import "os"
 
-func Parse(obj interface{}) {
+func Parse(obj interface{}) *Object {
 	o, err := NewObject(obj)
 	if err != nil {
 		Exit(o, err)
@@ -10,6 +10,7 @@ func Parse(obj interface{}) {
 	if err = o.Parse(); err != nil {
 		Exit(o, err)
 	}
+	return o
 }
 
 func Exit(obj *Object, err error) {

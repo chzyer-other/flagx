@@ -25,7 +25,7 @@ func (ss *SliceSetter) Set(s string) error {
 }
 
 func (s *SliceSetter) String() string {
-	return fmt.Sprintf("%v", s.Val)
+	return fmt.Sprintf("%v", s.Val.Interface())
 }
 
 type SliceField struct {

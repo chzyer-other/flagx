@@ -3,7 +3,13 @@ package flagx
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
+
+func IsPubField(name string) bool {
+	rs := []rune(name)
+	return strings.ToUpper(string(rs[0])) == string(rs[0])
+}
 
 type ErrorFmt struct {
 	err  error

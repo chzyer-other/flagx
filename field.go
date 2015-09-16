@@ -63,6 +63,9 @@ func NewField(t reflect.StructField, val reflect.Value) (f *Field, err error) {
 		Val:  &val,
 		Type: t.Type,
 	}
+	if !IsPubField(t.Name) {
+		return nil, nil
+	}
 	f.fielder = f.selectFielder(t.Type)(f)
 
 	if err = f.decodeTag(t.Tag); err != nil {

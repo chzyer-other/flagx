@@ -58,6 +58,9 @@ func (o *Object) parseFields(t reflect.Type, v *reflect.Value) error {
 		if err != nil {
 			return err
 		}
+		if field == nil {
+			continue
+		}
 		if idx, ok := field.ArgIdx(); ok {
 			if idx == -1 {
 				if o.isAllArg {
@@ -111,8 +114,12 @@ func (o *Object) usage(fs *flag.FlagSet, name string) {
 	if len(o.Opt) > 0 {
 		fmt.Fprintf(os.Stderr, "\noption:\n")
 		fs.VisitAll(func(f *flag.Flag) {
-			format := "  -%s=%s: %s\n"
-			fmt.Fprintf(os.Stderr, format, f.Name, f.DefValue, f.Usage)
+			format := "  -%s=%s"
+			fmt.Fprintf(os.Stderr, format, f.Name, f.DefValue)
+			if f.Usage != "" {
+				fmt.Fprintf(os.Stderr, ": %s", f.Usage)
+			}
+			fmt.Fprintln(os.Stderr)
 		})
 	}
 }

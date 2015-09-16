@@ -79,7 +79,7 @@ func (is *IntSetter) SetInt(i int64) {
 }
 
 func (i *IntSetter) String() string {
-	return fmt.Sprintf("%v", i.Val)
+	return fmt.Sprintf("%v", i.Val.Interface())
 }
 
 type IntField struct {

@@ -66,12 +66,16 @@ func NewField(t reflect.StructField, val reflect.Value) (f *Field, err error) {
 	if !IsPubField(t.Name) {
 		return nil, nil
 	}
-	f.fielder = f.selectFielder(t.Type)(f)
 
-	if err = f.decodeTag(t.Tag); err != nil {
+	process, err := f.decodeTag(t.Tag)
+	if !process {
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 
+	f.fielder = f.selectFielder(t.Type)(f)
 	if err = f.fielder.Init(); err != nil {
 		return nil, err
 	}
@@ -120,8 +124,11 @@ func (f *Field) ArgIdx() (int, bool) {
 	return idx, true
 }
 
-func (f *Field) decodeTag(t reflect.StructTag) error {
+func (f *Field) decodeTag(t reflect.StructTag) (bool, error) {
 	flagString := t.Get("flag")
+	if flagString == "-" {
+		return false, nil
+	}
 	tags := strings.Split(flagString, ";")
 	start := 1
 
@@ -134,7 +141,7 @@ func (f *Field) decodeTag(t reflect.StructTag) error {
 	for i := start; i < len(tags); i++ {
 		sp := strings.Split(tags[i], "=")
 		if len(sp) != 2 {
-			return ErrOptInvalid.Format(flagString, f.Name)
+			return true, ErrOptInvalid.Format(flagString, f.Name)
 		}
 		switch sp[0] {
 		case KEY_USAGE:
@@ -144,14 +151,14 @@ func (f *Field) decodeTag(t reflect.StructTag) error {
 		default:
 			ob, ok := f.fielder.(OptBinder)
 			if !ok {
-				return ErrOptMissHandler.Format(sp[0], f.Name)
+				return true, ErrOptMissHandler.Format(sp[0], f.Name)
 			}
 			if err := ob.BindOpt(sp[0], sp[1]); err != nil {
-				return err
+				return true, err
 			}
 		}
 	}
-	return nil
+	return true, nil
 }
 
 func (f *Field) FlagName() string {

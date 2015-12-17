@@ -67,15 +67,18 @@ func NewField(t reflect.StructField, val reflect.Value) (f *Field, err error) {
 		return nil, nil
 	}
 
-	process, err := f.decodeTag(t.Tag)
-	if !process {
-		return nil, nil
+	fieldFunc, errSelectField := f.selectFielder(t.Type)
+	if errSelectField == nil {
+		f.fielder = fieldFunc(f)
 	}
-	if err != nil {
+
+	process, err := f.decodeTag(t.Tag)
+	if errSelectField != nil && process {
+		panic(errSelectField)
+	} else if !process || err != nil {
 		return nil, err
 	}
 
-	f.fielder = f.selectFielder(t.Type)(f)
 	if err = f.fielder.Init(); err != nil {
 		return nil, err
 	}
@@ -83,32 +86,32 @@ func NewField(t reflect.StructField, val reflect.Value) (f *Field, err error) {
 	return f, nil
 }
 
-func (f *Field) selectFielder(t reflect.Type) func(f *Field) Fielder {
+func (f *Field) selectFielder(t reflect.Type) (func(f *Field) Fielder, error) {
 	switch t.Kind() {
 	case reflect.Int, reflect.Int64, reflect.Uint:
 		fallthrough
 	case reflect.Int8, reflect.Int16, reflect.Int32:
 		if n := IntFieldHook.Select(t); n != nil {
-			return n
+			return n, nil
 		}
-		return NewIntField
+		return NewIntField, nil
 	case reflect.Bool:
 		if n := BoolFieldHook.Select(t); n != nil {
-			return n
+			return n, nil
 		}
-		return NewBoolField
+		return NewBoolField, nil
 	case reflect.String:
 		if n := StringFieldHook.Select(t); n != nil {
-			return n
+			return n, nil
 		}
-		return NewStringField
+		return NewStringField, nil
 	case reflect.Slice:
 		if n := SliceFieldHook.Select(t); n != nil {
-			return n
+			return n, nil
 		}
-		return NewSliceField
+		return NewSliceField, nil
 	default:
-		panic(fmt.Sprintf("not support for type: %v", t))
+		return nil, fmt.Errorf("not support for type: %v", t)
 	}
 }
 
